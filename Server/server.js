@@ -26,31 +26,46 @@ var client = new SolrNode({
     protocol: 'http'
 });
 
-app.get('/', (req, res) => {
-    res.render('index')
-});
+// app.get('/', (req, res) => {
+//     res.render('index')
+// });
 
-app.post('/', async (req,res)=>{
+app.post('/api/search', async (req,res)=>{
     const {query} = req.body;
-    console.log(query);
+    // console.log(query);
+    console.log(`*${query.split(" ")}*`);
     
     var strQuery = client
     .query()
+    // .q(`summary:*${query.split(" ").join("*")}*`)
     .q(`summary:*${query}*`)
     .addParams({
         wt:'json',
         incident:true
     })
     .rows(Rel_Doc_Count);
+
+    // console.log("Str query");
+    // console.log(strQuery);
     
     // Search documents using strQuery
     client.search(strQuery, function (err, result) {
         if (err) {
             console.log(err);
-        return;
+            return res
+                .status(500)
+                .send({
+                    success: false,
+                })
         }
-        console.log('Response:', result.response);
-        res.send(result.response)
+        // console.log('Response:', result.response);
+        // res.send(result.response)
+        return res
+            .status(200)
+            .send({
+                success: true,
+                data: result.response
+            })
     });
 
 })
