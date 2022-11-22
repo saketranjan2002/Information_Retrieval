@@ -1,16 +1,20 @@
-import React,{useState} from 'react'
+import React,{useState, useEffect} from 'react'
 import InfoCard from '../InfoCard/InfoCard';
 
 import classes from "./Pagination.module.css"
 
 function Pagination(props) {
     const [currentPage,setCurrentPage] = useState(1);
-    const [docsPerPage,setDocsPerPage] = useState(10);
+    const [docsPerPage,setDocsPerPage] = useState(8);
     // const [pageNo,setPageNo] = useState(1);
 
     const indexOfLastDoc = currentPage*docsPerPage;
     const indexOfFirstDoc = indexOfLastDoc - docsPerPage;
     let totalDocs = 0;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    },[props.data]);
 
     if(props.data.docs){
         totalDocs = props.data.docs.length;
