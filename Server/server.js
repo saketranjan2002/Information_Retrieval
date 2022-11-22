@@ -33,7 +33,7 @@ var client = new SolrNode({
 app.post('/api/search', async (req,res)=>{
     const {query} = req.body;
     // console.log(query);
-    console.log(`*${query.split(" ")}*`);
+    // console.log(`*${query.split(" ")}*`);
     
     var strQuery = client
     .query()
@@ -70,5 +70,48 @@ app.post('/api/search', async (req,res)=>{
 
 })
 
+app.post('/api/search/go', async (req,res)=>{
+    const {query} = req.body;
+    console.log(query.split(" "));
 
+    let summQueryObj = {}
 
+    query.split(" ").map((qry) => {
+
+        summQueryObj = {
+            ...summQueryObj,
+            summary: `*${qry}*`,
+        }
+    });
+
+    console.log("query")
+    console.log(summQueryObj)
+    
+    var strQuery = client
+    .query()
+    .q(summQueryObj)
+    .addParams({
+        wt:'json',
+        incident:true,
+        // q.op: "AND"
+    })
+    .rows(Rel_Doc_Count);
+
+    client.search(strQuery, function (err, result) {
+        if (err) {
+            console.log(err);
+            return res
+                .status(500)
+                .send({
+                    success: false,
+                })
+        }
+        return res
+            .status(200)
+            .send({
+                success: true,
+                data: result.response
+            })
+    });
+
+})
