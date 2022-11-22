@@ -26,10 +26,14 @@ function Search(props) {
     }
 
     return (
-    <form className = {classes.search} onSubmit = {searchHandler}>
-        <input ref = {searchRef} type="text" />
-        <button type='submit'><i className="fa-solid fa-magnifying-glass"></i></button>
-    </form>
+        <>
+            <form className = {classes.search} onSubmit = {searchHandler}>
+                <input ref = {searchRef} type="text" />
+                <button type='submit'><i className="fa-solid fa-magnifying-glass"></i></button>
+                <div className = {classes.blur}></div>
+            </form>
+        </>
+
     )
 }
 
