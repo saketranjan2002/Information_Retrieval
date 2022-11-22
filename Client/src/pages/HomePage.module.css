@@ -1,8 +1,11 @@
 .homepage {
     text-align: center;
-    height: 100vh;
+    /* height: 100vh; */
+    margin-bottom: 2rem;
 }
 
 .res {
-    
+    display: flex;
+    flex-direction:column;
+    align-items: center;;
 }
