@@ -41,24 +41,24 @@ const writeInFile = async (id,sc) => {
     }
 }
 
-app.post('/api/search', async (req,res)=>{
-    const {query} = req.body;
+app.post('/api/search', async (req, res) => {
+    const { query } = req.body;
     // console.log(query);
     // console.log(`*${query.split(" ")}*`);
-    
+
     var strQuery = client
-    .query()
-    // .q(`summary:*${query.split(" ").join("*")}*`)
-    .q(`summary:*${query}*`)
-    .addParams({
-        wt:'json',
-        incident:true
-    })
-    .rows(Rel_Doc_Count);
+        .query()
+        // .q(`summary:*${query.split(" ").join("*")}*`)
+        .q(`summary:*${query}*`)
+        .addParams({
+            wt: 'json',
+            incident: true
+        })
+        .rows(Rel_Doc_Count);
 
     // console.log("Str query");
     // console.log(strQuery);
-    
+
     // Search documents using strQuery
     client.search(strQuery, function (err, result) {
         if (err) {
@@ -81,175 +81,180 @@ app.post('/api/search', async (req,res)=>{
 
 })
 
-app.post('/api/search/go',async (req,res)=>{
+app.post('/api/search/go', async (req, res) => {
 
-    const {query} = req.body;
+    const { query } = req.body;
     console.log(query.split(" "));
 
     let docMap = new Map();
 
-    let qryArr = query.split("")
+    let qryArr = query.split(" ")
     let len = qryArr.length;
 
-    // let summQueryObj = {}
+    const searchPromise = new Promise((resolve, reject) => {
+        qryArr.forEach(async (qry, id) => {
+            try {
+                let summQueryObj = {
+                    summary: `*${qry}*`,
+                }
 
-    await qryArr.forEach(async (qry,id) => {
+                let authQueryObj = {
+                    author: `*${qry}*`
+                }
 
-        try{
-            let summQueryObj = {
-                summary: `*${qry}*`,
+                let tagQueryObj = {
+                    tag: `*${qry}*`
+                }
+
+                let strQuery = client
+                    .query()
+                    .q(summQueryObj)
+                    .addParams({
+                        wt: 'json',
+                        incident: true,
+                        // q.op: "AND"
+                    })
+                    .rows(Rel_Doc_Count);
+
+
+                let result = await client.search(strQuery)
+
+                console.log("Summary :", result.response.docs.length)
+                // console.log(result.response.docs.length)
+
+                if (result.response.docs.length > 0) {
+
+                    result.response.docs.forEach((doc) => {
+                        // console.log(doc)
+
+                        if (docMap.has(doc.id)) {
+                            let obj = docMap.get(doc.id)
+
+                            docMap.set(doc.id, {
+                                ...obj,
+                                rank: obj.rank + 1
+                            })
+                        }
+                        else {
+                            docMap.set(doc.id, {
+                                ...doc,
+                                rank: 1
+                            })
+                        }
+                    })
+                }
+
+                strQuery = client
+                    .query()
+                    .q(authQueryObj)
+                    .addParams({
+                        wt: 'json',
+                        incident: true,
+                    })
+                    .rows(Rel_Doc_Count);
+
+
+                result = await client.search(strQuery);
+
+                console.log("authors :", result.response.docs.length)
+                // console.log(result.response.docs.length)
+                // console.log(result.response)
+
+                if (result.response.docs.length > 0) {
+
+                    result.response.docs.forEach((doc) => {
+                        if (docMap.has(doc.id)) {
+                            let obj = docMap.get(doc.id)
+
+                            docMap.set(doc.id, {
+                                ...obj,
+                                rank: obj.rank + 1
+                            })
+                        }
+                        else {
+                            docMap.set(doc.id, {
+                                ...doc,
+                                rank: 1
+                            })
+                        }
+                    })
+                }
+
+                strQuery = client
+                    .query()
+                    .q(tagQueryObj)
+                    .addParams({
+                        wt: 'json',
+                        incident: true,
+                    })
+                    .rows(Rel_Doc_Count);
+
+
+                result = await client.search(strQuery);
+
+                console.log("tags :", result.response.docs.length)
+                // console.log(result.response.docs.length)
+                // console.log(result.response)
+
+                if (result.response.docs.length > 0) {
+
+                    result.response.docs.forEach((doc) => {
+                        if (docMap.has(doc.id)) {
+                            let obj = docMap.get(doc.id)
+
+                            docMap.set(doc.id, {
+                                ...obj,
+                                rank: obj.rank + 1
+                            })
+                        }
+                        else {
+                            docMap.set(doc.id, {
+                                ...doc,
+                                rank: 1
+                            })
+                        }
+                    })
+                }
+            }
+            catch (err) {
+                console.log("Error")
+                console.log(err)
+
+                res
+                    .status(500)
+                    .send({
+                        success: false
+                    })
             }
 
-            let authQueryObj = {
-                author: `*${qry}*`
+            if(id == len - 1) {
+                resolve()
             }
 
-            let tagQueryObj = {
-                tag: `*${qry}*`
-            }
-
-            let strQuery = client
-                .query()
-                .q(summQueryObj)
-                .addParams({
-                    wt:'json',
-                    incident:true,
-                    // q.op: "AND"
-                })
-                .rows(Rel_Doc_Count);
-            
-
-            let result = await client.search(strQuery)
-
-            console.log("Summary :",result.response.docs.length)
-            // console.log(result.response.docs.length)
-
-            if(result.response.docs.length > 0){
-                
-                result.response.docs.forEach((doc) => {
-                    // console.log(doc)
-
-                    if(docMap.has(doc.id)){
-                        let obj = docMap.get(doc.id)
-
-                        docMap.set(doc.id,{
-                            ...obj,
-                            rank: obj.rank + 1
-                        })
-                    }
-                    else{
-                        docMap.set(doc.id,{
-                            ...doc,
-                            rank: 1
-                        })
-                    }
-                })
-            }               
-            
-
-            strQuery = client
-                .query()
-                .q(authQueryObj)
-                .addParams({
-                    wt:'json',
-                    incident:true,
-                })
-                .rows(Rel_Doc_Count);
-            
-
-            result = await client.search(strQuery);
-
-            console.log("authors :",result.response.docs.length)
-            // console.log(result.response.docs.length)
-            // console.log(result.response)
-
-            if(result.response.docs.length > 0){
-                
-                result.response.docs.forEach((doc) => {
-                    if(docMap.has(doc.id)){
-                        let obj = docMap.get(doc.id)
-
-                        docMap.set(doc.id,{
-                            ...obj,
-                            rank: obj.rank + 1
-                        })
-                    }
-                    else{
-                        docMap.set(doc.id,{
-                            ...doc,
-                            rank: 1
-                        })
-                    }
-                })
-            }               
-
-            strQuery = client
-                .query()
-                .q(tagQueryObj)
-                .addParams({
-                    wt:'json',
-                    incident:true,
-                })
-                .rows(Rel_Doc_Count);
-            
-
-            result = await client.search(strQuery);
-                
-            console.log("tags :",result.response.docs.length)
-            // console.log(result.response.docs.length)
-            // console.log(result.response)
-
-            if(result.response.docs.length > 0){
-                
-                result.response.docs.forEach((doc) => {
-                    if(docMap.has(doc.id)){
-                        let obj = docMap.get(doc.id)
-
-                        docMap.set(doc.id,{
-                            ...obj,
-                            rank: obj.rank + 1
-                        })
-                    }
-                    else{
-                        docMap.set(doc.id,{
-                            ...doc,
-                            rank: 1
-                        })
-                    }
-                })
-            }               
-        }
-        catch(err){
-            console.log("Error")
-            console.log(err)
-
-            res
-                .status(500)
-                .send({
-                    success:false
-                })
-        }
-
-    });
-
-    
-    let searchResults = []
-    
-    docMap.forEach((value,key) => {
-        searchResults.push(value);
+        });
     })
+    // })
+
+
+    // searchPromise.the
+    searchPromise.then(() => {
+        let searchResults = []
     
-    console.log("Results !!")
-    console.log(searchResults.length)
-    console.log(searchResults);
-
-    return res
-        .status(200)
-        .send({
-            success: true,
-            data: {
-                docs: searchResults
-            }
+        docMap.forEach((value, key) => {
+            searchResults.push(value);
         })
-
+    
+        console.log("Results !!")
+        console.log(searchResults.length)
+        console.log(searchResults);
+    
+        return res
+            .status(200)
+            .send({
+                success: true,
+                data: {
+                    docs: searchResults
+                }
+            })
+    })
 })
