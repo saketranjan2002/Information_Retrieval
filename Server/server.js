@@ -1,16 +1,13 @@
-const bodyParser = require('body-parser')
-const { promiseImpl } = require('ejs')
 const express = require('express')
-const path = require('path')
-const { send } = require('process')
+const SolrNode = require('solr-node');
+const fs = require("fs")
+
 const app = express()
 const PORT = 4500
-const Rel_Doc_Count = 60
-var SolrNode = require('solr-node');
-const STATIC_PATH = path.join(__dirname + '/Public')
+const Rel_Doc_Count= 60
 
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
+
+app.use(express.json())
 
 app.listen(PORT, (req, res) => {
     console.log(`Server started at http://localhost:${PORT}`);
@@ -21,16 +18,28 @@ app.set("view engine", "ejs")
 app.set("views", __dirname + "/Public/views")
 
 // Create client
-var client = new SolrNode({
+const client = new SolrNode({
     host: 'localhost',
     port: '8983',
     core: 'myCore_1',
     protocol: 'http'
 });
 
-// app.get('/', (req, res) => {
-//     res.render('index')
-// });
+const writeInFile = async (id,sc) => {
+
+    try{
+        if(!fs.existsSync("../Feedback")){
+            fs.mkdirSync("../Feedback")
+        }
+
+        
+
+        
+    }catch(err){
+        console.log("Write file Error: ");
+        console.log(err);
+    }
+}
 
 app.post('/api/search', async (req, res) => {
     const { query } = req.body;
