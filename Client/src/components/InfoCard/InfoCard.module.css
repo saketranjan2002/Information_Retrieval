@@ -5,11 +5,14 @@
     /* margin: 1rem 0; */
     border: 2px solid black;
     border-radius: 8px;
-    width: 600px;
+    width: 620px;
     min-width: 400px;
     max-width: 800px;
     padding: 0.5rem 1rem;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .title {
@@ -37,6 +40,11 @@
     gap: 8px;
 }
 
-.link {
+.feedback i {
+    font-size: 2rem;
+    cursor: pointer;
+}
 
+.feedback.green i {
+    color: green;
 }
