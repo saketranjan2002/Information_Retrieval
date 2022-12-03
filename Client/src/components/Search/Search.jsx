@@ -13,7 +13,7 @@ function Search(props) {
         const qry = searchRef.current.value;
 
         try {
-            const res = await axios.post("/api/search",{
+            const res = await axios.post("/api/search/go",{
                 query:qry,
             })
 
