@@ -5,7 +5,7 @@ import classes from "./InfoCard.module.css"
 function InfoCard(props) {
 
     // console.log("dos :-")
-    console.log(props.doc);
+    // console.log(props.doc);
 
     // console.log(props.doc.title[0]);
     // console.log(eval(props.doc.author[0]));
@@ -18,12 +18,14 @@ function InfoCard(props) {
         }
     }
 
+    console.log(eval(props.doc.author[0]));
+
     return (
     <div className = {classes.card}>
         <div>
             <div className = {classes.title}>{props.doc.title[0]}</div>
             <div className = {classes.authors}>
-                {eval(props.doc.author[0]).map((obj,idx) => {
+                {/* {eval(props.doc.author[0]).map((obj,idx) => {
 
                     if(idx < 3){
                         return(
@@ -34,7 +36,16 @@ function InfoCard(props) {
                     else{
                         return (<span></span>);
                     }
+                })} */}
+
+                {eval(props.doc.author[0]).map((auth) => {
+                    return (
+                        <span className = {classes.author}>
+                            {auth.name},&nbsp;
+                        </span>
+                    )
                 })}
+                
             </div>
             <div className = {classes.links}>{
                 eval(props.doc.link[0]).map((obj) => {
