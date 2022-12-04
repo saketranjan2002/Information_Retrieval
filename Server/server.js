@@ -25,15 +25,26 @@ const client = new SolrNode({
     protocol: 'http'
 });
 
-const writeInFile = async (id,sc) => {
+
+// Global Values
+let feedbackMap = new Map();
+let searchResults = []
+
+const getFeedback = async (id) => {
 
     try{
         if(!fs.existsSync("../Feedback")){
             fs.mkdirSync("../Feedback")
         }
 
-        
+        if(feedbackMap.has(id)){
+            const temp = feedbackMap.get(id);
 
+            feedbackMap.set(id,temp.get(id) + 1)
+        }
+        else{
+            feedbackMap.set(id,1)
+        }
         
     }catch(err){
         console.log("Write file Error: ");
@@ -79,6 +90,31 @@ app.post('/api/search', async (req, res) => {
             })
     });
 
+})
+
+app.post("/api/giveFeedback",async (req,res) => {
+    try {
+        const {id} = req.body;
+        
+        if(feedbackMap.has(id)){
+            const temp = feedbackMap.get(id);
+
+            feedbackMap.set(id,temp+1);
+        }
+        else{
+            feedbackMap.set(id,1);
+        }
+    } catch (error) {
+
+        console.log("Feedback Error");
+        console.log(error);
+
+        return res
+            .status(500)
+            .send({
+                success:false
+            })
+    }
 })
 
 app.post('/api/search/go', async (req, res) => {
@@ -220,7 +256,7 @@ app.post('/api/search/go', async (req, res) => {
                 console.log("Error")
                 console.log(err)
 
-                res
+                return res
                     .status(500)
                     .send({
                         success: false
@@ -238,15 +274,25 @@ app.post('/api/search/go', async (req, res) => {
 
     // searchPromise.the
     searchPromise.then(() => {
-        let searchResults = []
+        searchResults = []
     
         docMap.forEach((value, key) => {
-            searchResults.push(value);
+
+            let obj = value;
+
+            if(feedbackMap.has(key)){
+                obj = {
+                    ...value,
+                    rank: value.rank + feedbackMap.get(key)
+                }
+            }
+
+            searchResults.push(obj);
         })
     
-        console.log("Results !!")
-        console.log(searchResults.length)
-        console.log(searchResults);
+        // console.log("Results !!")
+        // console.log(searchResults.length)
+        // console.log(searchResults);
     
         return res
             .status(200)
