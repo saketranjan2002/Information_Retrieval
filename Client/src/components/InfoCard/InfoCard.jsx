@@ -16,7 +16,7 @@ function InfoCard(props) {
             })
 
             if(res.data.success){
-                setTimeout(() => {setIsChecked(false)},1000)
+                setTimeout(() => {setIsChecked(false)},2000)
             }
         }
     }

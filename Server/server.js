@@ -11,9 +11,6 @@ app.listen(PORT, (req, res) => {
     console.log(`Server started at http://localhost:${PORT}`);
 });
 
-// app.set("view engine", "ejs")
-// app.set("views", __dirname + "/Public/views")
-
 
 const client = new SolrNode({
     host: 'localhost',
@@ -86,7 +83,37 @@ function mergeSort(array) {
     }
     
     return merge(mergeSort(array.slice(0,half)),mergeSort(array.slice(half)))
-  }
+}
+
+function wordFreq (word,string){
+    let strMap = new Map();
+    word = word.toLowerCase();
+    // console.log(`word = ${word}`);
+    // console.log(`string = ${string}`);
+
+    const temp = string.split("\n");
+
+    // console.log(temp);
+
+    temp.forEach(sentence => {
+        sentence.split(" ").forEach(w => {
+
+            w = w.toLowerCase();
+            if(strMap.has(w)){
+                strMap.set(w,strMap.get(w)+1)
+            }
+            else{
+                strMap.set(w,1)
+            }
+        })
+    })
+
+    if(!strMap.has(word)){
+        return 1;
+    }
+
+    return strMap.get(word)
+}
 
 app.post('/api/search', async (req, res) => {
 
@@ -134,18 +161,23 @@ app.post('/api/search', async (req, res) => {
                     result.response.docs.forEach((doc) => {
                         // console.log(doc)
 
+                        const wordCount = wordFreq(qry,doc.summary[0]);
+                        // console.log(`${qry} = ${wordCount}`);
+
                         if (docMap.has(doc.id)) {
                             let obj = docMap.get(doc.id)
 
+                            // console.log(`wordcount = ${wordFreq(qry,doc.summary[0])}`);
+
                             docMap.set(doc.id, {
                                 ...obj,
-                                rank: obj.rank + 1
+                                rank: obj.rank + wordCount
                             })
                         }
                         else {
                             docMap.set(doc.id, {
                                 ...doc,
-                                rank: 1
+                                rank: wordCount
                             })
                         }
                     })
@@ -268,13 +300,14 @@ app.post('/api/search', async (req, res) => {
 
         const mergeRes = mergeSort(searchResults);
 
-        // console.log("sorted :-");
-        // mergeRes.forEach((doc) => {
-        //     console.log({
-        //         id: doc.id,
-        //         rank: doc.rank
-        //     });
-        // })
+        console.log("sorted :-");
+        mergeRes.forEach((doc) => {
+            console.log({
+                id: doc.id,
+                rank: doc.rank
+            });
+            // console.log(doc.summary[0]);
+        })
 
         return res
             .status(200)
