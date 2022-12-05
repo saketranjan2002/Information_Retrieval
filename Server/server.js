@@ -324,4 +324,39 @@ app.post('/api/search', async (req, res) => {
 })
 
 
-app.get()
+app.get('/api/showTrending',(req,res)=>{
+    Results=[]
+    const Trending_Size = 10
+    trendingMap.forEach((value, key) => {
+
+        let obj = value;
+        Results.push(obj);
+
+    })
+
+    let mergeRes = mergeSort(Results);
+    mergeRes = mergeRes.slice(0, Trending_Size);
+    trendingMap.clear();
+
+    if (mergeRes.length >= 10) {
+        for(let i = 0 ; i < 10 ; i++){
+            let tDoc = mergeRes[i]
+            trendingMap.set(tDoc.id,tDoc)
+        }
+    }
+    else{
+        mergeRes.forEach((doc) => {
+            trendingMap.set(doc.id,doc)
+        })
+    }
+
+    return res
+        .status(200)
+        .send({
+            success: true,
+            data: {
+                docs: mergeRes
+            }
+        })
+
+})

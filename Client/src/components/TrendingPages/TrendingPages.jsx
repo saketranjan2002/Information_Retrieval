@@ -1,8 +1,9 @@
 import React from "react";
 import classes from "./TrendingPages.module.css"
+import axios from "axios";
 
-function TrendingPages(){
-    
+function TrendingPages(props){
+
     const TrendingHandler = async (e) => {
         e.preventDefault();
         try {
