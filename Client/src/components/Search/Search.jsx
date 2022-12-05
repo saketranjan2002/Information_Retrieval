@@ -13,11 +13,11 @@ function Search(props) {
         const qry = searchRef.current.value;
 
         try {
-            const res = await axios.post("/api/search/go",{
+            const res = await axios.post("/api/search",{
                 query:qry,
             })
 
-            console.log(res.data.data);
+            // console.log(res.data.data);
             props.dataHandler(res.data.data);
         } catch (error) {
             console.log("Error :-");

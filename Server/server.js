@@ -1,11 +1,9 @@
 const express = require('express')
 const SolrNode = require('solr-node');
-const fs = require("fs")
 
 const app = express()
 const PORT = 4500
 const Rel_Doc_Count= 60
-
 
 app.use(express.json())
 
@@ -13,11 +11,10 @@ app.listen(PORT, (req, res) => {
     console.log(`Server started at http://localhost:${PORT}`);
 });
 
+// app.set("view engine", "ejs")
+// app.set("views", __dirname + "/Public/views")
 
-app.set("view engine", "ejs")
-app.set("views", __dirname + "/Public/views")
 
-// Create client
 const client = new SolrNode({
     host: 'localhost',
     port: '8983',
@@ -25,63 +22,75 @@ const client = new SolrNode({
     protocol: 'http'
 });
 
-const writeInFile = async (id,sc) => {
+let feedbackMap = new Map();
+let searchResults = []
 
-    try{
-        if(!fs.existsSync("../Feedback")){
-            fs.mkdirSync("../Feedback")
-        }
-
-        
-
-        
-    }catch(err){
-        console.log("Write file Error: ");
-        console.log(err);
-    }
+const printMap = () => {
+    feedbackMap.forEach((value,key) => {
+        console.log(`${key} => ${value}`);
+    })
 }
 
-app.post('/api/search', async (req, res) => {
-    const { query } = req.body;
-    // console.log(query);
-    // console.log(`*${query.split(" ")}*`);
+app.post("/api/giveFeedback",async (req,res) => {
+    try {
+        const {id} = req.body;
 
-    var strQuery = client
-        .query()
-        // .q(`summary:*${query.split(" ").join("*")}*`)
-        .q(`summary:*${query}*`)
-        .addParams({
-            wt: 'json',
-            incident: true
-        })
-        .rows(Rel_Doc_Count);
+        console.log("here" + id);
+        
+        if(feedbackMap.has(id)){
+            const temp = feedbackMap.get(id);
 
-    // console.log("Str query");
-    // console.log(strQuery);
-
-    // Search documents using strQuery
-    client.search(strQuery, function (err, result) {
-        if (err) {
-            console.log(err);
-            return res
-                .status(500)
-                .send({
-                    success: false,
-                })
+            feedbackMap.set(id,temp+1);
         }
-        // console.log('Response:', result.response);
-        // res.send(result.response)
+        else{
+            feedbackMap.set(id,1);
+        }
+
         return res
             .status(200)
             .send({
-                success: true,
-                data: result.response
+                success: true
             })
-    });
 
+    } catch (error) {
+
+        console.log("Feedback Error");
+        console.log(error);
+
+        return res
+            .status(500)
+            .send({
+                success:false
+            })
+    }
 })
 
-app.post('/api/search/go', async (req, res) => {
+function merge(left, right) {
+    let arr = []
+    while (left.length && right.length) {
+        if (left[0].rank > right[0].rank) {
+            arr.push(left.shift())  
+        } else {
+            arr.push(right.shift()) 
+        }
+    }
+    
+    return [ ...arr, ...left, ...right ]
+}
+
+function mergeSort(array) {
+    const half = array.length / 2
+    
+    if(array.length < 2){
+      return array 
+    }
+    
+    return merge(mergeSort(array.slice(0,half)),mergeSort(array.slice(half)))
+}
+
+let trendingMap = new Map();
+
+app.post('/api/search', async (req, res) => {
 
     const { query } = req.body;
     console.log(query.split(" "));
@@ -193,8 +202,6 @@ app.post('/api/search/go', async (req, res) => {
                 result = await client.search(strQuery);
 
                 console.log("tags :", result.response.docs.length)
-                // console.log(result.response.docs.length)
-                // console.log(result.response)
 
                 if (result.response.docs.length > 0) {
 
@@ -220,7 +227,7 @@ app.post('/api/search/go', async (req, res) => {
                 console.log("Error")
                 console.log(err)
 
-                res
+                return res
                     .status(500)
                     .send({
                         success: false
@@ -233,48 +240,88 @@ app.post('/api/search/go', async (req, res) => {
 
         });
     })
-    // })
-
-
-     function merge_Arrays(left_sub_array, right_sub_array) {
-            let array = []
-            while (left_sub_array.length && right_sub_array.length) {
-               if (left_sub_array.rank > right_sub_array.rank) {
-                  array.push(left_sub_array.shift())
-               } else {
-                  array.push(right_sub_array.shift())
-               }
-            }
-            return [ ...array, ...left_sub_array, ...right_sub_array ]
-        }
-        function merge_sort(unsorted_Array) {
-            const middle_index = unsorted_Array.length / 2
-            if(unsorted_Array.length < 2) {
-                return unsorted_Array
-            }
-            const left_sub_array = unsorted_Array.splice(0, middle_index)
-            return merge_Arrays(merge_sort(left_sub_array),merge_sort(unsorted_Array))
-        }
 
     // searchPromise.the
     searchPromise.then(() => {
-        let searchResults = []
+        searchResults = []
     
         docMap.forEach((value, key) => {
-            searchResults.push(value);
+
+            let obj = value;
+
+            if(feedbackMap.has(key)){
+                obj = {
+                    ...value,
+                    rank: value.rank + feedbackMap.get(key)
+                }
+            }
+
+            // console.log({
+            //     id: obj.id,
+            //     rank: obj.rank
+            // });
+
+            searchResults.push(obj);
         })
     
-        console.log("Results !!")
-        console.log(searchResults.length)
-        console.log(searchResults);
+        // console.log("Results !!")
+        // console.log(searchResults.length)
+        // console.log(searchResults);
+
+        const mergeRes = mergeSort(searchResults);
+
+        // let trendingMap=new Map();
+
+        if (mergeRes.length >= 10) {
+            for(let i = 0 ; i < 10 ; i++){
+                let tDoc = mergeRes[i]
+
+                if(trendingMap.has(tDoc.id)){
+                    trendingMap.set(tDoc.id,{
+                        ...tDoc,
+                        rank: tDoc.rank + trendingMap.get(tDoc.id).rank
+                    })
+                }
+                else{
+                    trendingMap.set(tDoc.id,tDoc)
+                }
+            }
+        }
+        else{
+            mergeRes.forEach((doc) => {
+                if (trendingMap.has(doc.id)) {
+                    let obj = trendingMap.get(doc.id)
+
+                    trendingMap.set(doc.id, {
+                        ...obj,
+                        rank: obj.rank + doc.rank
+                    })
+                }
+                else {
+                    trendingMap.set(doc.id,doc)
+                }
+            })
+        }
+
+
+        // console.log("sorted :-");
+        // mergeRes.forEach((doc) => {
+        //     console.log({
+        //         id: doc.id,
+        //         rank: doc.rank
+        //     });
+        // })
 
         return res
             .status(200)
             .send({
                 success: true,
                 data: {
-                    docs: merge_sort(searchResults)
+                    docs: mergeRes
                 }
             })
     })
 })
+
+
+app.get()

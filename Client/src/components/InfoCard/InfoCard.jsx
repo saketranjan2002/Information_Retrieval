@@ -1,24 +1,27 @@
 import React,{useState} from 'react'
+import axios from "axios"
 
 import classes from "./InfoCard.module.css"
 
 function InfoCard(props) {
 
-    // console.log("dos :-")
-    // console.log(props.doc);
-
-    // console.log(props.doc.title[0]);
-    // console.log(eval(props.doc.author[0]));
-
     const [isCheck,setIsChecked] = useState(false);
 
-    const getFeedback = () => {
+    const getFeedback = async () => {
         if(!isCheck){
             setIsChecked(true);
+
+            const res = await axios.post("/api/giveFeedback", {
+                id: props.doc.id
+            })
+
+            if(res.data.success){
+                setTimeout(() => {setIsChecked(false)},1000)
+            }
         }
     }
 
-    console.log(eval(props.doc.author[0]));
+    // console.log(props.doc);
 
     return (
     <div className = {classes.card}>
