@@ -7,9 +7,11 @@ function TrendingPages(props){
     const TrendingHandler = async (e) => {
         e.preventDefault();
         try {
+            props.setLoading(true);
             const res = await axios.get("/api/showTrending")
 
             // console.log(res.data.data);
+            props.setLoading(false);
             props.dataHandler(res.data.data);
         } catch (error) {
             console.log("Error :-");

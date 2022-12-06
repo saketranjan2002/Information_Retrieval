@@ -11,9 +11,6 @@ app.listen(PORT, (req, res) => {
     console.log(`Server started at http://localhost:${PORT}`);
 });
 
-// app.set("view engine", "ejs")
-// app.set("views", __dirname + "/Public/views")
-
 
 const client = new SolrNode({
     host: 'localhost',
@@ -88,6 +85,32 @@ function mergeSort(array) {
     return merge(mergeSort(array.slice(0,half)),mergeSort(array.slice(half)))
 }
 
+function wordFreq (word,string){
+    let strMap = new Map();
+    word = word.toLowerCase();
+
+    const temp = string.split("\n");
+
+    temp.forEach(sentence => {
+        sentence.split(" ").forEach(w => {
+
+            w = w.toLowerCase();
+            if(strMap.has(w)){
+                strMap.set(w,strMap.get(w)+1)
+            }
+            else{
+                strMap.set(w,1)
+            }
+        })
+    })
+
+    if(!strMap.has(word)){
+        return 1;
+    }
+
+    return strMap.get(word)
+}
+
 let trendingMap = new Map();
 
 app.post('/api/search', async (req, res) => {
@@ -121,14 +144,13 @@ app.post('/api/search', async (req, res) => {
                     .addParams({
                         wt: 'json',
                         incident: true,
-                        // q.op: "AND"
                     })
                     .rows(Rel_Doc_Count);
 
 
                 let result = await client.search(strQuery)
 
-                console.log("Summary :", result.response.docs.length)
+                // console.log("Summary :", result.response.docs.length)
                 // console.log(result.response.docs.length)
 
                 if (result.response.docs.length > 0) {
@@ -136,18 +158,23 @@ app.post('/api/search', async (req, res) => {
                     result.response.docs.forEach((doc) => {
                         // console.log(doc)
 
+                        const wordCount = wordFreq(qry,doc.summary[0]);
+                        // console.log(`${qry} = ${wordCount}`);
+
                         if (docMap.has(doc.id)) {
                             let obj = docMap.get(doc.id)
 
+                            // console.log(`wordcount = ${wordFreq(qry,doc.summary[0])}`);
+
                             docMap.set(doc.id, {
                                 ...obj,
-                                rank: obj.rank + 1
+                                rank: obj.rank + wordCount
                             })
                         }
                         else {
                             docMap.set(doc.id, {
                                 ...doc,
-                                rank: 1
+                                rank: wordCount
                             })
                         }
                     })
@@ -165,9 +192,7 @@ app.post('/api/search', async (req, res) => {
 
                 result = await client.search(strQuery);
 
-                console.log("authors :", result.response.docs.length)
-                // console.log(result.response.docs.length)
-                // console.log(result.response)
+                // console.log("authors :", result.response.docs.length)
 
                 if (result.response.docs.length > 0) {
 
@@ -201,7 +226,7 @@ app.post('/api/search', async (req, res) => {
 
                 result = await client.search(strQuery);
 
-                console.log("tags :", result.response.docs.length)
+                // console.log("tags :", result.response.docs.length)
 
                 if (result.response.docs.length > 0) {
 
@@ -241,7 +266,6 @@ app.post('/api/search', async (req, res) => {
         });
     })
 
-    // searchPromise.the
     searchPromise.then(() => {
         searchResults = []
     
@@ -256,21 +280,10 @@ app.post('/api/search', async (req, res) => {
                 }
             }
 
-            // console.log({
-            //     id: obj.id,
-            //     rank: obj.rank
-            // });
-
             searchResults.push(obj);
         })
-    
-        // console.log("Results !!")
-        // console.log(searchResults.length)
-        // console.log(searchResults);
 
         const mergeRes = mergeSort(searchResults);
-
-        // let trendingMap=new Map();
 
         if (mergeRes.length >= 10) {
             for(let i = 0 ; i < 10 ; i++){
@@ -303,14 +316,6 @@ app.post('/api/search', async (req, res) => {
             })
         }
 
-
-        // console.log("sorted :-");
-        // mergeRes.forEach((doc) => {
-        //     console.log({
-        //         id: doc.id,
-        //         rank: doc.rank
-        //     });
-        // })
 
         return res
             .status(200)

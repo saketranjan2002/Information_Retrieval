@@ -38,6 +38,7 @@ function Pagination(props) {
 
     return (
         <div className = {classes.div}>
+            {props.loading && <h2>Loading ...</h2>}
             <div className= {classes.res}>
                 {
                     props.data?.docs && 
