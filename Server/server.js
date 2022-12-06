@@ -88,12 +88,8 @@ function mergeSort(array) {
 function wordFreq (word,string){
     let strMap = new Map();
     word = word.toLowerCase();
-    // console.log(`word = ${word}`);
-    // console.log(`string = ${string}`);
 
     const temp = string.split("\n");
-
-    // console.log(temp);
 
     temp.forEach(sentence => {
         sentence.split(" ").forEach(w => {
@@ -114,6 +110,8 @@ function wordFreq (word,string){
 
     return strMap.get(word)
 }
+
+let trendingMap = new Map();
 
 app.post('/api/search', async (req, res) => {
 
@@ -146,14 +144,13 @@ app.post('/api/search', async (req, res) => {
                     .addParams({
                         wt: 'json',
                         incident: true,
-                        // q.op: "AND"
                     })
                     .rows(Rel_Doc_Count);
 
 
                 let result = await client.search(strQuery)
 
-                console.log("Summary :", result.response.docs.length)
+                // console.log("Summary :", result.response.docs.length)
                 // console.log(result.response.docs.length)
 
                 if (result.response.docs.length > 0) {
@@ -195,9 +192,7 @@ app.post('/api/search', async (req, res) => {
 
                 result = await client.search(strQuery);
 
-                console.log("authors :", result.response.docs.length)
-                // console.log(result.response.docs.length)
-                // console.log(result.response)
+                // console.log("authors :", result.response.docs.length)
 
                 if (result.response.docs.length > 0) {
 
@@ -231,7 +226,7 @@ app.post('/api/search', async (req, res) => {
 
                 result = await client.search(strQuery);
 
-                console.log("tags :", result.response.docs.length)
+                // console.log("tags :", result.response.docs.length)
 
                 if (result.response.docs.length > 0) {
 
@@ -271,7 +266,6 @@ app.post('/api/search', async (req, res) => {
         });
     })
 
-    // searchPromise.the
     searchPromise.then(() => {
         searchResults = []
     
@@ -286,28 +280,42 @@ app.post('/api/search', async (req, res) => {
                 }
             }
 
-            // console.log({
-            //     id: obj.id,
-            //     rank: obj.rank
-            // });
-
             searchResults.push(obj);
         })
-    
-        // console.log("Results !!")
-        // console.log(searchResults.length)
-        // console.log(searchResults);
 
         const mergeRes = mergeSort(searchResults);
 
-        console.log("sorted :-");
-        mergeRes.forEach((doc) => {
-            console.log({
-                id: doc.id,
-                rank: doc.rank
-            });
-            // console.log(doc.summary[0]);
-        })
+        if (mergeRes.length >= 10) {
+            for(let i = 0 ; i < 10 ; i++){
+                let tDoc = mergeRes[i]
+
+                if(trendingMap.has(tDoc.id)){
+                    trendingMap.set(tDoc.id,{
+                        ...tDoc,
+                        rank: tDoc.rank + trendingMap.get(tDoc.id).rank
+                    })
+                }
+                else{
+                    trendingMap.set(tDoc.id,tDoc)
+                }
+            }
+        }
+        else{
+            mergeRes.forEach((doc) => {
+                if (trendingMap.has(doc.id)) {
+                    let obj = trendingMap.get(doc.id)
+
+                    trendingMap.set(doc.id, {
+                        ...obj,
+                        rank: obj.rank + doc.rank
+                    })
+                }
+                else {
+                    trendingMap.set(doc.id,doc)
+                }
+            })
+        }
+
 
         return res
             .status(200)
@@ -318,4 +326,42 @@ app.post('/api/search', async (req, res) => {
                 }
             })
     })
+})
+
+
+app.get('/api/showTrending',(req,res)=>{
+    Results=[]
+    const Trending_Size = 10
+    trendingMap.forEach((value, key) => {
+
+        let obj = value;
+        Results.push(obj);
+
+    })
+
+    let mergeRes = mergeSort(Results);
+    mergeRes = mergeRes.slice(0, Trending_Size);
+    trendingMap.clear();
+
+    if (mergeRes.length >= 10) {
+        for(let i = 0 ; i < 10 ; i++){
+            let tDoc = mergeRes[i]
+            trendingMap.set(tDoc.id,tDoc)
+        }
+    }
+    else{
+        mergeRes.forEach((doc) => {
+            trendingMap.set(doc.id,doc)
+        })
+    }
+
+    return res
+        .status(200)
+        .send({
+            success: true,
+            data: {
+                docs: mergeRes
+            }
+        })
+
 })
