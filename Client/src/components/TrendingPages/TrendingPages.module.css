@@ -4,6 +4,7 @@
     color: #666;
     border-radius: 1rem;
     border: 1.5px solid #666;
+    font-weight: bold;
 }
 .btn:hover{
     color: black;
