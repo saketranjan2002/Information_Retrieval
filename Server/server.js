@@ -3,7 +3,7 @@ const SolrNode = require('solr-node');
 
 const app = express()
 const PORT = 4500
-const Rel_Doc_Count= 60
+const Rel_Doc_Count= 100
 
 app.use(express.json())
 
@@ -32,7 +32,7 @@ app.post("/api/giveFeedback",async (req,res) => {
     try {
         const {id} = req.body;
 
-        console.log("here" + id);
+        // console.log("here" + id);
         
         if(feedbackMap.has(id)){
             const temp = feedbackMap.get(id);
@@ -116,7 +116,7 @@ let trendingMap = new Map();
 app.post('/api/search', async (req, res) => {
 
     const { query } = req.body;
-    console.log(query.split(" "));
+    // console.log(query.split(" "));
 
     let docMap = new Map();
 
@@ -283,7 +283,7 @@ app.post('/api/search', async (req, res) => {
             searchResults.push(obj);
         })
 
-        const mergeRes = mergeSort(searchResults);
+        let mergeRes = mergeSort(searchResults);
 
         if (mergeRes.length >= 10) {
             for(let i = 0 ; i < 10 ; i++){
@@ -314,6 +314,10 @@ app.post('/api/search', async (req, res) => {
                     trendingMap.set(doc.id,doc)
                 }
             })
+        }
+
+        if(mergeRes.length > 100){
+            mergeRes = mergeRes.slice(0,Rel_Doc_Count);
         }
 
 

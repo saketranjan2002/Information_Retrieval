@@ -25,7 +25,7 @@ function InfoCard(props) {
 
     return (
     <div className = {classes.card}>
-        <div>
+        <div className = {classes.content}>
             <div className = {classes.title}>{props.doc.title[0]}</div>
             <div className = {classes.authors}>
                 {/* {eval(props.doc.author[0]).map((obj,idx) => {
