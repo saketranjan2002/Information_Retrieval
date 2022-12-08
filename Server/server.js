@@ -156,15 +156,11 @@ app.post('/api/search', async (req, res) => {
                 if (result.response.docs.length > 0) {
 
                     result.response.docs.forEach((doc) => {
-                        // console.log(doc)
 
                         const wordCount = wordFreq(qry,doc.summary[0]);
-                        // console.log(`${qry} = ${wordCount}`);
 
                         if (docMap.has(doc.id)) {
                             let obj = docMap.get(doc.id)
-
-                            // console.log(`wordcount = ${wordFreq(qry,doc.summary[0])}`);
 
                             docMap.set(doc.id, {
                                 ...obj,
