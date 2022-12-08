@@ -30,17 +30,21 @@
 # How to Run the Application
 
 1. Start the *Solr* server at `port: 8983`
+2. Download Dataset from [Arxiv Dataset](https://drive.google.com/drive/folders/1Xo6T60xqrJWS5KD-iYRxYXc0QKH9jLuN?usp=share_link) & Upload the data in `Solr Server`
+   
+   Or
+
 2. Create core & Upload the .json data `arxiv.json` in (`\Dataset` folder) in the `Solr Server`
-3. Navigate to `\Server` in terminal, and write following commands
+4. Navigate to `\Server` in terminal, and write following commands
 ```bash
 npm i
 npm run dev
 ```
-4. Naviate to `\Client` in terminal, and write following commands
+5. Naviate to `\Client` in terminal, and write following commands
 ```bash
 npm i
 npm start
 ```
 #### Eg.
 ![An image](Assets/Screenshot_20221208_212027.png)
-5. Now the server application is up and running 🥳
+6. Now the server application is up and running 🥳

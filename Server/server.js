@@ -31,8 +31,6 @@ const printMap = () => {
 app.post("/api/giveFeedback",async (req,res) => {
     try {
         const {id} = req.body;
-
-        // console.log("here" + id);
         
         if(feedbackMap.has(id)){
             const temp = feedbackMap.get(id);
